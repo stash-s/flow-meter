@@ -1,0 +1,6 @@
+{
+    "terminal.integrated.env.linux": {
+        "PATH": "/home/stash/.platformio/penv/bin:/home/stash/.platformio/penv:/home/stash/.local/bin:/home/stash/bin:/home/stash/.nvm/versions/node/v10.0.0/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games",
+        "PLATFORMIO_CALLER": "vscode"
+    }
+}
