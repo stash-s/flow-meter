@@ -4,23 +4,41 @@
 #include <ESP8266WebServer.h>     //Local WebServer used to serve the configuration portal
 #include <WiFiManager.h>          //https://github.com/tzapu/WiFiManager WiFi Configuration Magic
 #include <ArduinoOTA.h>
-#include <LiquidCrystal_I2C.h>
+#include <aREST.h>
 
-#define COLUMS 16
-#define ROWS   2
 
 WiFiManager wifiManager;
 
-LiquidCrystal_I2C lcd(0x38);
+// Create aREST instance
+aREST rest = aREST();
+
+// The port to listen for incoming TCP connections
+#define LISTEN_PORT           80
+
+// Create an instance of the server
+WiFiServer server(LISTEN_PORT);
+
+const int sensor_pin = D7;
+unsigned long flow_count=0;
+
+ICACHE_RAM_ATTR
+void flow_meter_isr () {
+    ++ flow_count;
+}
+
+ICACHE_RAM_ATTR
+int reset_flow_counter (String command) {
+    flow_count=0;
+    return 1;
+}
 
 void setup() {
   
     //wifiManager.setConfigPortalTimeout (180);
-    wifiManager.setDebugOutput (true);
+    //wifiManager.setDebugOutput (true);
     //wifiManager.resetSettings ();
 
     Serial.begin (9600);
-
 
     Serial.println ("connecting...");
     if (wifiManager.autoConnect ("Dupario")) {
@@ -29,26 +47,15 @@ void setup() {
         Serial.println ("connection failed, rebooting");
         ESP.restart();
     }
-
-
     
-    lcd.begin(16,2);               // initialize the lcd 
+    rest.variable ("flow", &flow_count);
+    rest.function ("reset", reset_flow_counter);
+    rest.set_id ("dupario");
+    rest.set_name ("esp8266");
 
- 
-    lcd.home ();                   // go home
-    lcd.print("Hello, ARDUINO ");  
-    lcd.setCursor ( 0, 1 );        // go to the next line
-    lcd.print (" FORUM - fm   ");
-
-    delay(1000);
-
-    lcd.clear();
-
-    /* prints static text */
-    lcd.setCursor(0, 1);            //set 1-st colum & 2-nd row, 1-st colum & row started at zero
-    lcd.print(F("Hello world!"));
-    lcd.setCursor(0, 2);            //set 1-st colum & 3-rd row, 1-st colum & row started at zero
-    lcd.print(F("Random number:"));
+    // Start the server
+    server.begin();
+    Serial.println("Server started");
 
     ArduinoOTA.onStart([]() {
         String type;
@@ -84,19 +91,29 @@ void setup() {
     });
     ArduinoOTA.begin();
 
-#define THE_LED D4
-    pinMode (THE_LED, OUTPUT);
+    pinMode (sensor_pin, INPUT);
+    attachInterrupt (sensor_pin, flow_meter_isr, CHANGE);
+
+    //pinMode (D5, OUTPUT)
 }
 
 void loop() {
-    static int count=0;
-    static bool lite=true;
 
-    if (++count >= 1000) {
-        count=0;
-        lite = ! lite;
-        digitalWrite (THE_LED, lite);
+    static bool last_seen = false;
+
+    bool current_value = digitalRead (sensor_pin);
+    if (current_value != last_seen) {
+        ++ flow_count;
     }
-    delay (1);
+    last_seen = current_value;
+
+    WiFiClient client = server.available();
+    if (client) {
+        while ( ! client.available ()) {
+            delay (1);
+        }
+        rest.handle (client);
+    }
+
     ArduinoOTA.handle();
 }
