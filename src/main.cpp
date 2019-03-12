@@ -18,7 +18,7 @@ aREST rest = aREST();
 // Create an instance of the server
 WiFiServer server(LISTEN_PORT);
 
-const int sensor_pin = D7;
+const int sensor_pin = D5;
 unsigned long flow_count=0;
 
 ICACHE_RAM_ATTR
@@ -41,7 +41,7 @@ void setup() {
     Serial.begin (9600);
 
     Serial.println ("connecting...");
-    if (wifiManager.autoConnect ("Dupario")) {
+    if (wifiManager.autoConnect ("zoo-autoconfig")) {
         Serial.println ("connected ... yay!");
     } else {
         Serial.println ("connection failed, rebooting");
@@ -50,7 +50,7 @@ void setup() {
     
     rest.variable ("flow", &flow_count);
     rest.function ("reset", reset_flow_counter);
-    rest.set_id ("dupario");
+    rest.set_id ("flow-meter");
     rest.set_name ("esp8266");
 
     // Start the server
@@ -92,7 +92,7 @@ void setup() {
     ArduinoOTA.begin();
 
     pinMode (sensor_pin, INPUT);
-    attachInterrupt (sensor_pin, flow_meter_isr, CHANGE);
+    attachInterrupt (sensor_pin, flow_meter_isr, RISING);
 
     //pinMode (D5, OUTPUT)
 }
