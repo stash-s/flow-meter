@@ -4,7 +4,7 @@
         "PLATFORMIO_CALLER": "vscode"
     },
     "terminal.integrated.env.osx": {
-        "PATH": "/Users/stanislaws/.platformio/penv/bin:/Users/stanislaws/.platformio/penv:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/X11/bin",
+        "PATH": "/Users/stanislaws/.platformio/penv/bin:/Users/stanislaws/.platformio/penv:/Library/Frameworks/Python.framework/Versions/3.7/bin:/Users/stanislaws/google-cloud-sdk/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/X11/bin",
         "PLATFORMIO_CALLER": "vscode"
     }
 }
